@@ -1,14 +1,18 @@
-import pandas as pd
-
 class WhaleTracker:
-    def __init__(self, df: pd.DataFrame):
-        self.df = df.copy()
+    def __init__(self, data: list):
+        self.data = data
 
     def detect_institutional_candles(self) -> dict:
-        self.df['vol_sma'] = self.df['volume'].rolling(window=20).mean()
-        last = self.df.iloc[-1]
+        if len(self.data) < 20:
+            return {"detected": False, "message": "بيانات غير كافية."}
+            
+        recent_data = self.data[-20:]
+        volumes = [c['volume'] for c in recent_data]
+        avg_volume = sum(volumes) / len(volumes)
         
-        volume_spike = last['volume'] > (last['vol_sma'] * 2.5)
+        last = self.data[-1]
+        volume_spike = last['volume'] > (avg_volume * 2.5)
+        
         body = abs(last['close'] - last['open'])
         total_range = last['high'] - last['low']
         is_strong_body = (body / total_range) > 0.7 if total_range > 0 else False
