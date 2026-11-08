@@ -1,14 +1,15 @@
-import pandas as pd
-
 class LiquidityEngine:
-    def __init__(self, df: pd.DataFrame):
-        self.df = df.copy()
+    def __init__(self, data: list):
+        self.data = data
 
     def find_liquidity_pools(self, lookback: int = 50) -> dict:
-        recent = self.df.tail(lookback)
-        recent_high = recent['high'].max()
-        recent_low = recent['low'].min()
-        current = self.df['close'].iloc[-1]
+        if len(self.data) < lookback:
+            return {"warning": "SAFE", "message": "بيانات غير كافية.", "high": 0, "low": 0}
+            
+        recent = self.data[-lookback:]
+        recent_high = max(c['high'] for c in recent)
+        recent_low = min(c['low'] for c in recent)
+        current = self.data[-1]['close']
         
         dist_high = abs(current - recent_high)
         dist_low = abs(current - recent_low)
