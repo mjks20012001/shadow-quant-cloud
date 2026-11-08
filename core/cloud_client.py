@@ -1,36 +1,37 @@
-import yfinance as yf
-from datetime import datetime, timedelta
+import os
+import requests
 from utils.logger import setup_logger
 
 logger = setup_logger("CloudClient", "INFO")
 
 class CloudClient:
     def __init__(self):
-        # Gold Futures symbol on Yahoo Finance
-        self.symbol = "GC=F"
-        logger.info("Connected to Yahoo Finance Data Feed.")
+        self.api_key = os.getenv("TWELVEDATA_API_KEY")
+        self.symbol = "XAU/USD"
+        logger.info("Connected to TwelveData Feed.")
 
-    def get_ohlcv(self, timeframe: str = "15m", limit: int = 200) -> list:
+    def get_ohlcv(self, timeframe: str = "15min", limit: int = 200) -> list:
         try:
-            ticker = yf.Ticker(self.symbol)
-            # جلب بيانات آخر 5 أيام لإطار 15 دقيقة
-            df = ticker.history(period="5d", interval="15m")
+            url = f"https://api.twelvedata.com/time_series?symbol={self.symbol}&interval={timeframe}&outputsize={limit}&apikey={self.api_key}"
+            response = requests.get(url, timeout=10)
+            response.raise_for_status()
+            res_data = response.json()
             
-            if df.empty:
-                raise ValueError("No data returned from Yahoo Finance.")
-            
-            # تحويل البيانات لشكل يفهمه محركنا
+            if "values" not in res_data:
+                raise ValueError(f"TwelveData Error: {res_data.get('message', 'Unknown')}")
+
             data = []
-            for index, row in df.tail(limit).iterrows():
+            # TwelveData returns newest first, we reverse to oldest first
+            for item in reversed(res_data["values"]):
                 data.append({
-                    'time': int(index.timestamp() * 1000),
-                    'open': float(row['Open']),
-                    'high': float(row['High']),
-                    'low': float(row['Low']),
-                    'close': float(row['Close']),
-                    'volume': float(row['Volume']) if row['Volume'] > 0 else 1.0
+                    'time': item['datetime'],
+                    'open': float(item['open']),
+                    'high': float(item['high']),
+                    'low': float(item['low']),
+                    'close': float(item['close']),
+                    'volume': float(item['volume']) if item['volume'] else 1.0
                 })
             return data
         except Exception as e:
-            logger.error(f"Failed to fetch Yahoo data: {e}")
+            logger.error(f"Failed to fetch TwelveData: {e}")
             raise
