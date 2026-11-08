@@ -13,17 +13,16 @@ class AIOracle:
             
         base64_image = base64.b64encode(image_bytes).decode('utf-8')
         try:
-            # استخدام نموذج الرؤية المجاني من Groq
             response = self.client.chat.completions.create(
-                model="qwen/qwen3.8-27b",
+                model="llama-3.2-90b-vision-preview", # موديل محدث
                 messages=[{
                     "role": "user",
                     "content": [
-                        {"type": "text", "text": "حلل هذا الشارت للذهب. اذكر الاتجاه، مناطق السيولة (Liquidity Sweeps)، ومناطق العرض والطلب (Order Blocks) باختصار شديد."},
+                        {"type": "text", "text": "أنت خبير تداول. حلل هذا الشارت بالعربية. اذكر الاتجاه، مناطق السيولة (Liquidity)، ومناطق العرض والطلب (Order Blocks) باختصار."},
                         {"type": "image_url", "image_url": {"url": f"data:image/jpeg;base64,{base64_image}"}}
                     ]
                 }],
-                max_tokens=500
+                max_tokens=600
             )
             return response.choices[0].message.content
         except Exception as e:
