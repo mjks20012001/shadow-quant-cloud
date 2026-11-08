@@ -1,0 +1,96 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Project Shadow Cloud</title>
+    <link rel="stylesheet" href="/static/style.css">
+    <style>
+        .whale-alert { background: #1f6feb; color: white; padding: 15px; border-radius: 8px; display: none; margin-bottom: 20px; border-right: 5px solid #58a6ff; }
+        .liquidity-warning { background: #d29922; color: black; padding: 15px; border-radius: 8px; display: none; margin-bottom: 20px; border-right: 5px solid #f0883e; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>Project Shadow Cloud</h1>
+            <div class="status" id="connection-status">Connecting...</div>
+        </header>
+        
+        <div id="whale-alert" class="whale-alert"></div>
+        <div id="liq-warning" class="liquidity-warning"></div>
+
+        <div class="grid">
+            <div class="card">
+                <h2>تحليل الذكاء الاصطناعي (AI Vision)</h2>
+                <input type="file" id="chart-upload" accept="image/*">
+                <button id="analyze-btn" class="btn-primary" style="margin-top:10px; padding: 10px; background: #58a6ff; color: #fff; border: none; border-radius: 5px; cursor: pointer;">حلل الشارت الآن</button>
+                <div id="ai-result" style="margin-top: 15px; font-size: 0.9rem; color: #8b949e;"></div>
+            </div>
+            
+            <div class="card">
+                <h2>مؤشر حيتان السوق (Whales)</h2>
+                <div class="data-row"><span>الحالة:</span> <span id="whale-status">--</span></div>
+                <div class="data-row"><span>الرسالة:</span> <span id="whale-msg">--</span></div>
+            </div>
+
+            <div class="card">
+                <h2>محاكي صانع السوق (Liquidity)</h2>
+                <div class="data-row"><span>تحذير السيولة:</span> <span id="liq-status">--</span></div>
+                <div class="data-row"><span>الرسالة:</span> <span id="liq-msg">--</span></div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const wsProtocol = window.location.protocol === 'https:' ? 'wss://' : 'ws://';
+        const ws = new WebSocket(`${wsProtocol}${window.location.host}/ws`);
+        
+        ws.onopen = () => {
+            document.getElementById('connection-status').innerText = "متصل";
+            document.getElementById('connection-status').style.color = "#3fb950";
+        };
+        
+        ws.onmessage = (event) => {
+            const data = JSON.parse(event.data);
+            
+            const whaleAlert = document.getElementById('whale-alert');
+            if (data.whale.detected) {
+                whaleAlert.style.display = 'block';
+                whaleAlert.innerText = data.whale.message;
+            } else {
+                whaleAlert.style.display = 'none';
+            }
+            document.getElementById('whale-status').innerText = data.whale.detected ? "مكتشف!" : "هادئ";
+            document.getElementById('whale-msg').innerText = data.whale.message;
+            
+            const liqWarn = document.getElementById('liq-warning');
+            if (data.liquidity.warning !== "SAFE") {
+                liqWarn.style.display = 'block';
+                liqWarn.innerText = `⚠️ ${data.liquidity.message}`;
+            } else {
+                liqWarn.style.display = 'none';
+            }
+            document.getElementById('liq-status').innerText = data.liquidity.warning;
+            document.getElementById('liq-msg').innerText = data.liquidity.message;
+        };
+
+        document.getElementById('analyze-btn').addEventListener('click', async () => {
+            const fileInput = document.getElementById('chart-upload');
+            if (!fileInput.files.length) return alert("اختر صورة أولاً");
+            
+            const formData = new FormData();
+            formData.append('file', fileInput.files[0]);
+            
+            document.getElementById('ai-result').innerText = "جاري التحليل...";
+            try {
+                const res = await fetch('/api/analyze_chart', { method: 'POST', body: formData });
+                const data = await res.json();
+                document.getElementById('ai-result').innerText = data.analysis;
+            } catch (error) {
+                document.getElementById('ai-result').innerText = "حدث خطأ في الاتصال.";
+            }
+        });
+    </script>
+</body>
+</html>
