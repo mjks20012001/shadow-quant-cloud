@@ -32,9 +32,9 @@ async def websocket_endpoint(websocket: WebSocket):
     await websocket.accept()
     try:
         while True:
-            df = client.get_ohlcv()
-            whale = WhaleTracker(df).detect_institutional_candles()
-            liquidity = LiquidityEngine(df).find_liquidity_pools()
+            data = client.get_ohlcv()
+            whale = WhaleTracker(data).detect_institutional_candles()
+            liquidity = LiquidityEngine(data).find_liquidity_pools()
             
             payload = {"whale": whale, "liquidity": liquidity}
             await websocket.send_text(json.dumps(payload))
