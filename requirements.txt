@@ -2,7 +2,7 @@ fastapi
 uvicorn
 jinja
 websockets
-pandas
+pandas>=2.2.0
 ta
 ccxt
 python-dotenv
