@@ -15,7 +15,7 @@ class AIOracle:
         try:
             # استخدام نموذج الرؤية المجاني من Groq
             response = self.client.chat.completions.create(
-                model="meta-llama/llama-4-scout-17b-16e-instruct",
+                model="qwen/qwen3.8-27b",
                 messages=[{
                     "role": "user",
                     "content": [
