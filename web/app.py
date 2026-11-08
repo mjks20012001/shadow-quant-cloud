@@ -32,7 +32,7 @@ async def websocket_endpoint(websocket: WebSocket):
     await websocket.accept()
     try:
         while True:
-            data = client.get_ohlcv()
+            data = client.get_ohlcv(timeframe="15m")
             whale = WhaleTracker(data).detect_institutional_candles()
             liquidity = LiquidityEngine(data).find_liquidity_pools()
             
